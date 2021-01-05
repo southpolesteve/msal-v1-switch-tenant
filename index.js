@@ -4,20 +4,23 @@ import {
   render,
 } from "https://unpkg.com/htm/preact/standalone.module.js";
 
-const msal = new Msal.UserAgentApplication({
-  auth: {
-    clientId: "203f1145-856a-4232-83d4-a43568fba23d",
-    redirectUri: "https://dataexplorer-dev.azurewebsites.net",
-  },
-});
+function createMsal(tenantId) {
+  return new Msal.UserAgentApplication({
+    auth: {
+      authority: `https://login.microsoftonline.com/${tenantId}`,
+      clientId: "203f1145-856a-4232-83d4-a43568fba23d",
+      redirectUri: "https://dataexplorer-dev.azurewebsites.net",
+    },
+  });
+}
+
+let msal = createMsal("common");
 
 async function switchTenant(tenantId) {
   console.log(`Switching to Tenant: ${tenantId}`);
-  const response = await msal.loginPopup({
-    authority: `https://login.microsoftonline.com/${tenantId}`,
-  });
+  msal = createMsal(tenantId);
+  const response = await msal.loginPopup();
   const tokenResponse = await msal.acquireTokenSilent({
-    authority: `https://login.microsoftonline.com/${tenantId}`,
     scopes: ["https://management.azure.com//.default"],
   });
   const token = tokenResponse.accessToken;
@@ -29,9 +32,7 @@ async function switchTenant(tenantId) {
 }
 
 async function login() {
-  const response = await msal.loginPopup({
-    authority: "https://login.microsoftonline.com/common",
-  });
+  const response = await msal.loginPopup();
   const tokenResponse = await msal.acquireTokenSilent({
     scopes: ["https://management.azure.com//.default"],
   });
